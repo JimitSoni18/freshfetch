@@ -1,29 +1,29 @@
 use crate::mlua;
 use crate::regex;
 
-use crate::errors;
 use super::kernel;
+use crate::errors;
 
-use std::fs::{ read_to_string };
-use std::path::{ Path };
-use std::process::{ Command };
+use std::fs::read_to_string;
+use std::path::Path;
+use std::process::Command;
 
-use regex::{ Regex };
 use mlua::prelude::*;
+use regex::Regex;
 
-use crate::{ Inject };
-use kernel::{ Kernel };
+use crate::Inject;
+use kernel::Kernel;
 
 #[derive(Clone, Debug)]
 pub struct Motherboard {
-    pub name: String,
-    pub vendor: String,
-    pub revision: String,
+	pub name: String,
+	pub vendor: String,
+	pub revision: String,
 }
 
 impl Motherboard {
-    pub(crate) fn new(k: &Kernel) -> Option<Self> {
-        match k.name.as_str() {
+	pub(crate) fn new(k: &Kernel) -> Option<Self> {
+		match k.name.as_str() {
             "Linux" => {
                 let sys_devices_virtual_dmi_id = Path::new("/sys/devices/virtual/dmi/id");
                 // Android
@@ -119,35 +119,46 @@ impl Motherboard {
             }
             _ => None,
         }
-    }
+	}
 }
 
 impl Inject for Motherboard {
-    fn inject(&self, lua: &mut Lua) {
-        match lua.create_table() {
-            Ok(t) => {
-                match t.set("name", self.name.clone()) {
-                    Ok(_) => (),
-                    Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!() }
-                }
-                match t.set("vendor", self.vendor.clone()) {
-                    Ok(_) => (),
-                    Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!() }
-                }
-                match t.set("revision", self.revision.clone()) {
-                    Ok(_) => (),
-                    Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!() }
-                }
-                match lua.globals().set("motherboard", t) {
-                    Ok(_) => (),
-                    Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!() }
-                }
-            }
-            Err(e) => {
-                errors::handle(&format!("{}{}", errors::LUA, e));
-                panic!();
-            }
-        }
-    }
+	fn inject(&self, lua: &mut Lua) {
+		match lua.create_table() {
+			Ok(t) => {
+				match t.set("name", self.name.clone()) {
+					Ok(_) => (),
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!()
+					}
+				}
+				match t.set("vendor", self.vendor.clone()) {
+					Ok(_) => (),
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!()
+					}
+				}
+				match t.set("revision", self.revision.clone()) {
+					Ok(_) => (),
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!()
+					}
+				}
+				match lua.globals().set("motherboard", t) {
+					Ok(_) => (),
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!()
+					}
+				}
+			}
+			Err(e) => {
+				errors::handle(&format!("{}{}", errors::LUA, e));
+				panic!();
+			}
+		}
+	}
 }
-

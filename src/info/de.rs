@@ -1,34 +1,40 @@
 use crate::cmd_lib;
 use crate::mlua;
 
-use crate::errors;
-use super::kernel;
 use super::distro;
+use super::kernel;
+use crate::errors;
 
 use std::env;
 
+use cmd_lib::run_fun;
 use mlua::prelude::*;
-use cmd_lib::{ run_fun };
 
-use crate::{ Inject };
-use kernel::{ Kernel };
-use distro::{ Distro };
+use crate::Inject;
+use distro::Distro;
+use kernel::Kernel;
 
-pub(crate) struct De ( pub String, pub String, );
+pub(crate) struct De(pub String, pub String);
 
 impl De {
 	pub fn new(k: &Kernel, d: &Distro) -> Option<Self> {
 		let to_return = match k.name.as_str() {
-			"Mac OS X"|"macOS" => Some(De(String::from("Aqua"), String::new())),
+			"Mac OS X" | "macOS" => Some(De(String::from("Aqua"), String::new())),
 			_ => {
 				if d.short_name.starts_with("Windows") {
-					if d.short_name.starts_with("Windows 8") || d.short_name.starts_with("Windows 10") {
+					if d.short_name.starts_with("Windows 8")
+						|| d.short_name.starts_with("Windows 10")
+					{
 						Some(De(String::from("Modern UI/Metro"), String::new()))
 					} else {
 						Some(De(String::from("Aero"), String::new()))
 					}
 				} else {
-					if if let Ok(desktop_session) = env::var("DESKTOP_SESSION") { desktop_session == "regolith" } else { false } {
+					if if let Ok(desktop_session) = env::var("DESKTOP_SESSION") {
+						desktop_session == "regolith"
+					} else {
+						false
+					} {
 						Some(De(String::from("Regolith"), String::new()))
 					} else if let Ok(mut current_desktop) = env::var("XDG_CURRENT_DESKTOP") {
 						current_desktop = current_desktop.replace("X-", "");
@@ -59,48 +65,45 @@ impl De {
 				.unwrap_or(String::from("0"))
 				.parse::<i32>()
 				.ok()
-				.unwrap_or(0) >= 4 {
+				.unwrap_or(0) >= 4
+			{
 				to_return.0 = to_return.0.replace("KDE", "Plasma");
 			}
 			// Get version number.
 			{
-				// In neofetch, this uses a Bash switch statement, but because 
-				// Bash switch statements let you do patterns, we can't use a 
+				// In neofetch, this uses a Bash switch statement, but because
+				// Bash switch statements let you do patterns, we can't use a
 				// switch statement here.
 				if to_return.0.starts_with("Plasma") {
-					to_return.1 = run_fun!( plasmashell --version )
+					to_return.1 = run_fun!(plasmashell - -version)
 						.ok()
 						.unwrap_or(String::new())
 						.replace("plasmashell ", "")
 						.replace("\n", "");
 				} else if to_return.0.starts_with("MATE") {
-					to_return.1 = run_fun!( mate-session --version )
+					to_return.1 = run_fun!(mate - session - -version)
 						.ok()
 						.unwrap_or(String::new());
 				} else if to_return.0.starts_with("Xfce") {
-					to_return.1 = run_fun!( xfce4-session --version )
+					to_return.1 = run_fun!(xfce4 - session - -version)
 						.ok()
 						.unwrap_or(String::new());
 				} else if to_return.0.starts_with("GNOME") {
-					to_return.1 = run_fun!( gnome-shell --version )
+					to_return.1 = run_fun!(gnome - shell - -version)
 						.ok()
 						.unwrap_or(String::new());
 				} else if to_return.0.starts_with("Cinnamon") {
-					to_return.1 = run_fun!( cinnamon --version )
-						.ok()
-						.unwrap_or(String::new());
+					to_return.1 = run_fun!(cinnamon - -version).ok().unwrap_or(String::new());
 				} else if to_return.0.starts_with("Budgie") {
-					to_return.1 = run_fun!( budgie-desktop --version )
+					to_return.1 = run_fun!(budgie - desktop - -version)
 						.ok()
 						.unwrap_or(String::new());
 				} else if to_return.0.starts_with("LXQt") {
-					to_return.1 = run_fun!( lxqt-session --version )
+					to_return.1 = run_fun!(lxqt - session - -version)
 						.ok()
 						.unwrap_or(String::new());
 				} else if to_return.0.starts_with("Unity") {
-					to_return.1 = run_fun!( unity --version )
-						.ok()
-						.unwrap_or(String::new());
+					to_return.1 = run_fun!(unity - -version).ok().unwrap_or(String::new());
 				}
 			}
 			Some(to_return)
@@ -118,18 +121,30 @@ impl Inject for De {
 			Ok(t) => {
 				match t.set("name", self.0.as_str()) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{err}", errors::LUA, err = e)); panic!(); }
+					Err(e) => {
+						errors::handle(&format!("{}{err}", errors::LUA, err = e));
+						panic!();
+					}
 				}
 				match t.set("version", self.1.as_str()) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{err}", errors::LUA, err = e)); panic!(); }
+					Err(e) => {
+						errors::handle(&format!("{}{err}", errors::LUA, err = e));
+						panic!();
+					}
 				}
 				match globals.set("de", t) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{err}", errors::LUA, err = e)); panic!(); }
+					Err(e) => {
+						errors::handle(&format!("{}{err}", errors::LUA, err = e));
+						panic!();
+					}
 				}
 			}
-			Err(e) => { errors::handle(&format!("{}{err}", errors::LUA, err = e)); panic!(); }
+			Err(e) => {
+				errors::handle(&format!("{}{err}", errors::LUA, err = e));
+				panic!();
+			}
 		}
 	}
 }

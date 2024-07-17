@@ -5,10 +5,10 @@ use super::utils;
 use crate::errors;
 
 use mlua::prelude::*;
-use sysinfo::{ SystemExt };
+use sysinfo::SystemExt;
 
-use crate::{ Inject };
-use utils::{ get_system };
+use crate::Inject;
+use utils::get_system;
 
 #[derive(Clone, Debug)]
 pub(crate) struct Memory {
@@ -22,7 +22,7 @@ impl Memory {
 		Memory {
 			max: system.total_memory(),
 			used: system.used_memory(),
-		}	
+		}
 	}
 }
 
@@ -33,18 +33,30 @@ impl Inject for Memory {
 			Ok(t) => {
 				match t.set("max", self.max) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!();
+					}
 				}
 				match t.set("used", self.used) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!();
+					}
 				}
 				match globals.set("memory", t) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!();
+					}
 				}
 			}
-			Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
+			Err(e) => {
+				errors::handle(&format!("{}{}", errors::LUA, e));
+				panic!();
+			}
 		}
 	}
 }

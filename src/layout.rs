@@ -1,15 +1,15 @@
 use crate::mlua;
 
-use crate::misc;
 use crate::art;
 use crate::info;
+use crate::misc;
 
 use mlua::prelude::*;
 
-use crate::{ Inject, Arguments };
-use misc::{ Terminal };
-use art::{ Art };
-use info::{ Info };
+use crate::{Args, Inject};
+use art::Art;
+use info::Info;
+use misc::Terminal;
 
 pub(crate) struct Layout {
 	pub art: Art,
@@ -18,14 +18,14 @@ pub(crate) struct Layout {
 }
 
 impl Layout {
-	pub fn new(args: &Arguments) -> Self {
+	pub fn new(args: &Args) -> Self {
 		let mut info = Info::new();
 		let art = Art::new(&mut info, &args);
 		let terminal = Terminal::new();
 		Layout {
-			art: art,
-			info: info,
-			terminal: terminal,
+			art,
+			info,
+			terminal,
 		}
 	}
 }

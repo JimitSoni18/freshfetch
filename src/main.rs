@@ -18,7 +18,7 @@ pub(crate) mod layout;
 pub(crate) mod misc;
 pub(crate) mod utils;
 
-use clap::{App, Arg};
+use clap::{Arg, Parser};
 use mlua::prelude::*;
 
 use assets::defaults::LAYOUT;
@@ -36,6 +36,14 @@ pub(crate) struct Arguments {
 pub(crate) trait Inject {
 	fn prep(&mut self) {}
 	fn inject(&self, _lua: &mut Lua) {}
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct Args {
+    #[arg(short, long)]
+    ascii_distro: String,
+    #[arg(short, long)]
+    logo: String,
 }
 
 fn main() {
@@ -57,6 +65,8 @@ fn main() {
 				.short("l")
 				.takes_value(false),
 		);
+
+    let args = Args::parse();
 
 	let matches = app.get_matches();
 

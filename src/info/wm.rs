@@ -1,20 +1,20 @@
 use crate::mlua;
 
-use crate::errors;
 use super::kernel;
 use super::utils;
+use crate::errors;
 
-use std::fs;
 use std::env;
-use std::process::{ Command };
+use std::fs;
+use std::process::Command;
 
 use mlua::prelude::*;
 
-use crate::{ Inject };
-use kernel::{ Kernel };
-use utils::{ PsAux, Grep };
+use crate::Inject;
+use kernel::Kernel;
+use utils::{Grep, PsAux};
 
-pub(crate) struct Wm ( pub String );
+pub(crate) struct Wm(pub String);
 
 impl Wm {
 	pub fn new(k: &Kernel) -> Option<Self> {
@@ -59,7 +59,11 @@ impl Wm {
 			} else {
 				None
 			}
-		} else if env::var("DISPLAY").is_ok() && k.name != "macOS" && k.name != "Mac OS X" && k.name != "FreeMiNT" {
+		} else if env::var("DISPLAY").is_ok()
+			&& k.name != "macOS"
+			&& k.name != "Mac OS X"
+			&& k.name != "FreeMiNT"
+		{
 			// TODO: Port this to rust using `x11rb` or a similar lib.
 			let try_output = Command::new("bash")
 				.arg("-c")
@@ -70,12 +74,14 @@ impl Wm {
 					let stdout = match String::from_utf8(output.stdout.clone()) {
 						Ok(v) => v,
 						Err(e) => {
-							errors::handle(&format!("{}{v:?}{}String{}{err}",
+							errors::handle(&format!(
+								"{}{v:?}{}String{}{err}",
 								errors::PARSE.0,
 								errors::PARSE.1,
 								errors::PARSE.2,
 								v = output.stdout,
-								err = e));
+								err = e
+							));
 							panic!();
 						}
 					};
@@ -86,17 +92,19 @@ impl Wm {
 					}
 				}
 				Err(e) => {
-					errors::handle(&format!("{}{cmd}{}{err}",
+					errors::handle(&format!(
+						"{}{cmd}{}{err}",
 						errors::CMD.0,
 						errors::CMD.1,
 						cmd = "...",
-						err = e));
+						err = e
+					));
 					panic!();
 				}
 			}
 		} else {
 			match k.name.as_str() {
-				"Mac OS X"|"macOS" => {
+				"Mac OS X" | "macOS" => {
 					let res = PsAux::new().grep(Grep {
 						max: Some(1usize),
 						search: None,
@@ -130,42 +138,40 @@ impl Wm {
 						only_matching: Some(true),
 					});
 					if !res.is_empty() {
-						if res[0] == "blackbox" { res[0] = String::from("bbLean (Blackbox)"); }
+						if res[0] == "blackbox" {
+							res[0] = String::from("bbLean (Blackbox)");
+						}
 						Some(Wm(format!("{}, Explorer", res[0].clone())))
 					} else {
 						Some(Wm(String::from("Explorer")))
 					}
 				}
-				"FreeMiNT" => {
-					match fs::read_dir("/proc/") {
-						Ok(dir) => {
-							for try_file in dir {
-								match try_file {
-									Ok(file) => {
-										match file.path().file_name() {
-											Some(v) => {
-												let name = v.to_string_lossy();
-												if name.contains("xaaes") || name.contains("xaloader") {
-													return Some(Wm(String::from("XaAES")));
-												} else if name.contains("myaes") {
-													return Some(Wm(String::from("MyAES")));
-												} else if name.contains("naes") {
-													return Some(Wm(String::from("N.AES")));
-												} else if name.contains("geneva") {
-													return Some(Wm(String::from("Geneva")));
-												}
-											}
-											None => (),
+				"FreeMiNT" => match fs::read_dir("/proc/") {
+					Ok(dir) => {
+						for try_file in dir {
+							match try_file {
+								Ok(file) => match file.path().file_name() {
+									Some(v) => {
+										let name = v.to_string_lossy();
+										if name.contains("xaaes") || name.contains("xaloader") {
+											return Some(Wm(String::from("XaAES")));
+										} else if name.contains("myaes") {
+											return Some(Wm(String::from("MyAES")));
+										} else if name.contains("naes") {
+											return Some(Wm(String::from("N.AES")));
+										} else if name.contains("geneva") {
+											return Some(Wm(String::from("Geneva")));
 										}
 									}
-									Err(_) => (),
-								}
+									None => (),
+								},
+								Err(_) => (),
 							}
-							Some(Wm(String::from("Atari AES")))
 						}
-						Err(_) => Some(Wm(String::from("Atari AES"))),
+						Some(Wm(String::from("Atari AES")))
 					}
-				}
+					Err(_) => Some(Wm(String::from("Atari AES"))),
+				},
 				_ => None,
 			}
 		}
@@ -176,7 +182,10 @@ impl Inject for Wm {
 	fn inject(&self, lua: &mut Lua) {
 		match lua.globals().set("wm", self.0.as_str()) {
 			Ok(_) => (),
-			Err(e) => { errors::handle(&format!("{}{err}", errors::LUA, err = e)); panic!(); }
+			Err(e) => {
+				errors::handle(&format!("{}{err}", errors::LUA, err = e));
+				panic!();
+			}
 		}
 	}
 }

@@ -1,14 +1,16 @@
 use crate::sysinfo;
 
-use std::sync::{ Mutex, MutexGuard };
+use std::sync::{Mutex, MutexGuard};
 
-use sysinfo::{ System, SystemExt, ProcessExt };
+use sysinfo::{ProcessExt, System, SystemExt};
 
 lazy_static! {
 	static ref SYSTEM: Mutex<System> = Mutex::new(System::new());
 }
 
-pub(crate) fn get_system() -> MutexGuard<'static, System> { SYSTEM.lock().unwrap() }
+pub(crate) fn get_system() -> MutexGuard<'static, System> {
+	SYSTEM.lock().unwrap()
+}
 
 #[derive(Clone, Debug)]
 pub(crate) struct Grep {
@@ -20,9 +22,12 @@ pub(crate) struct Grep {
 
 fn grep(through: Vec<String>, conf: Grep) -> Vec<String> {
 	let mut conf = conf.clone();
-	if conf.searches.is_none() && conf.search.is_some() { conf.searches = Some(vec![conf.search.clone().unwrap()]); }
-	if conf.searches.is_none() { return vec![]; }
-	else {
+	if conf.searches.is_none() && conf.search.is_some() {
+		conf.searches = Some(vec![conf.search.clone().unwrap()]);
+	}
+	if conf.searches.is_none() {
+		return vec![];
+	} else {
 		let mut to_return = Vec::new();
 		let mut i = 0usize;
 		for value in through.iter() {
@@ -38,21 +43,25 @@ fn grep(through: Vec<String>, conf: Grep) -> Vec<String> {
 					i += 1;
 				}
 			}
-			if Some(i) >= conf.max { return to_return; }
+			if Some(i) >= conf.max {
+				return to_return;
+			}
 		}
 		to_return
 	}
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct PsAux ( Vec<String> );
+pub(crate) struct PsAux(Vec<String>);
 
 impl PsAux {
 	pub fn new() -> Self {
 		PsAux({
 			let mut to_return: Vec<String> = Vec::new();
 			let system = get_system();
-			for (_, proc) in system.processes() { to_return.push(String::from(proc.name())); }
+			for (_, proc) in system.processes() {
+				to_return.push(String::from(proc.name()));
+			}
 			to_return
 		})
 	}

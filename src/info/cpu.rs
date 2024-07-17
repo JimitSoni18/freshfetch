@@ -1,17 +1,17 @@
 use crate::mlua;
 use crate::regex;
 
-use crate::errors;
 use super::kernel;
+use crate::errors;
 
 use std::fs;
-use std::path::{ Path };
+use std::path::Path;
 
 use mlua::prelude::*;
-use regex::{ Regex };
+use regex::Regex;
 
-use crate::{ Inject }; 
-use kernel::{ Kernel };
+use crate::Inject;
+use kernel::Kernel;
 
 #[derive(Debug)]
 pub(crate) struct Cpu {
@@ -31,11 +31,11 @@ impl Cpu {
 		let mut freq: Option<f32> = None;
 		let mut cores: Option<i32> = None;
 		match k.name.as_str() {
-			"Linux"|"MINIX"|"Windows" => {
+			"Linux" | "MINIX" | "Windows" => {
 				// TODO: Neofetch has some code to handle oddball CPU
 				// architectures here. Idk if rust has support for those, but
 				// porting that functionality wouldn't do much harm.
-				
+
 				match fs::read_to_string("/proc/cpuinfo") {
 					Ok(cpu_info) => {
 						let cpu_info_lines: Vec<&str> = cpu_info.split("\n").collect();
@@ -47,11 +47,11 @@ impl Cpu {
 							for line in cpu_info_lines.iter() {
 								if !skip {
 									if line.starts_with("model name")
-									|| line.starts_with("Hardware")
-									|| line.starts_with("Processor")
-									|| line.starts_with("cpu model")
-									|| line.starts_with("chip type")
-									|| line.starts_with("cpu type") {
+										|| line.starts_with("Hardware") || line
+										.starts_with("Processor") || line.starts_with("cpu model")
+										|| line.starts_with("chip type") || line
+										.starts_with("cpu type")
+									{
 										let split: Vec<&str> = line.split(": ").collect();
 										to_return = Some(String::from(split[1]));
 										skip = true;
@@ -74,19 +74,20 @@ impl Cpu {
 									if to_return.is_none() {
 										match fs::read_to_string(file) {
 											Ok(mut bios_limit) => {
-												bios_limit = bios_limit
-													.replace("\n", "")
-													.replace("\t", "");
+												bios_limit =
+													bios_limit.replace("\n", "").replace("\t", "");
 												match bios_limit.parse::<f32>() {
 													Ok(freq) => to_return = Some(freq / 1000.0),
 													Err(e) => {
-														errors::handle(&format!("{}{v}{}{type}{}{err}",
+														errors::handle(
+															&format!("{}{v}{}{type}{}{err}",
 															errors::PARSE.0,
 															errors::PARSE.1,
 															errors::PARSE.2,
 															v = bios_limit,
 															type = "f32",
-															err = e));
+															err = e),
+														);
 														panic!();
 													}
 												}
@@ -101,20 +102,23 @@ impl Cpu {
 								let mut skip = false;
 								for line in cpu_info_lines.iter() {
 									if !skip {
-										if line.starts_with("cpu MHz")
-										|| line.starts_with("clock") {
+										if line.starts_with("cpu MHz") || line.starts_with("clock")
+										{
 											let split: Vec<&str> = line.split(": ").collect();
-											let to_parse = String::from(split[1]).replace("MHz", "");
+											let to_parse =
+												String::from(split[1]).replace("MHz", "");
 											to_return = match to_parse.parse::<f32>() {
 												Ok(freq) => Some(freq / 1000.0),
 												Err(e) => {
-													errors::handle(&format!("{}{v}{}{type}{}{err}",
+													errors::handle(
+														&format!("{}{v}{}{type}{}{err}",
 														errors::PARSE.0,
 														errors::PARSE.1,
 														errors::PARSE.2,
 														v = to_parse,
 														type = "f32",
-														err = e));
+														err = e),
+													);
 													panic!();
 												}
 											};
@@ -129,25 +133,29 @@ impl Cpu {
 						// Get CPU cores.
 						cores = {
 							let mut to_return = 0;
-							for line in cpu_info_lines.iter() { if line.starts_with("processor") { to_return += 1; } }
+							for line in cpu_info_lines.iter() {
+								if line.starts_with("processor") {
+									to_return += 1;
+								}
+							}
 							Some(to_return)
 						};
 					}
 					Err(e) => {
-						errors::handle(&format!("{}{file}{}{err}",
+						errors::handle(&format!(
+							"{}{file}{}{err}",
 							errors::io::READ.0,
 							errors::io::READ.1,
 							file = "/proc/cpuinfo",
-							err = e));
+							err = e
+						));
 						panic!();
 					}
 				}
 			}
 			_ => (),
 		}
-		if name.is_some()
-		&& freq.is_some()
-		&& cores.is_some() {
+		if name.is_some() && freq.is_some() && cores.is_some() {
 			Some(Cpu {
 				name: {
 					let mut to_return = name
@@ -214,26 +222,44 @@ impl Inject for Cpu {
 			Ok(t) => {
 				match t.set("name", self.name.as_str()) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }	
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!();
+					}
 				}
 				match t.set("fullName", self.full_name.as_str()) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }	
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!();
+					}
 				}
 				match t.set("cores", self.cores) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }	
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!();
+					}
 				}
 				match t.set("freq", self.freq) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }	
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!();
+					}
 				}
 				match globals.set("cpu", t) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }	
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!();
+					}
 				}
 			}
-			Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
+			Err(e) => {
+				errors::handle(&format!("{}{}", errors::LUA, e));
+				panic!();
+			}
 		}
 	}
 }

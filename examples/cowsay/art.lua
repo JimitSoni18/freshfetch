@@ -1,4 +1,4 @@
-local cowsay = assert( io.popen("cowsay Death to windows") )
+local cowsay = assert( io.popen("cowsay Death to windows"), "please install cowsay" )
 
 print ""
 

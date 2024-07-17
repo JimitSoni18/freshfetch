@@ -1,23 +1,23 @@
-use crate::regex;
 use crate::mlua;
+use crate::regex;
 
+use crate::assets;
 use crate::assets::ascii_art;
 use crate::errors;
 use crate::info;
-use crate::assets;
 use info::distro;
 
-use std::fs;
 use std::env;
-use std::path::{ Path };
+use std::fs;
+use std::path::Path;
 
 use mlua::prelude::*;
-use regex::{ Regex };
+use regex::Regex;
 
-use crate::{ Inject, Arguments };
-use info::{ Info };
-use distro::{ DistroColors };
-use assets::{ ANSI, PRINT };
+use crate::{Args, Inject};
+use assets::{ANSI, PRINT};
+use distro::DistroColors;
+use info::Info;
 
 pub(crate) struct Art {
 	inner: String,
@@ -26,7 +26,7 @@ pub(crate) struct Art {
 }
 
 impl Art {
-	pub fn new(info: &mut Info, arguments: &Arguments) -> Self {
+	pub fn new(info: &mut Info, arguments: &Args) -> Self {
 		let mut to_return = Art {
 			inner: String::new(),
 			width: 0,
@@ -42,32 +42,48 @@ impl Art {
 						.join(".config/freshfetch/art.lua");
 					if art.exists() {
 						match fs::read_to_string(art) {
-							Ok(file) => to_return.inner = {
-								let ctx = Lua::new();
-								match ctx.load(PRINT).exec() {
-									Ok(_) => (),
-									Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
+							Ok(file) => {
+								to_return.inner = {
+									let ctx = Lua::new();
+									match ctx.load(PRINT).exec() {
+										Ok(_) => (),
+										Err(e) => {
+											errors::handle(&format!("{}{}", errors::LUA, e));
+											panic!();
+										}
+									}
+									match ctx.load(ANSI).exec() {
+										Ok(_) => (),
+										Err(e) => {
+											errors::handle(&format!("{}{}", errors::LUA, e));
+											panic!();
+										}
+									}
+									match ctx.load(&file).exec() {
+										Ok(_) => (),
+										Err(e) => {
+											errors::handle(&format!("{}{}", errors::LUA, e));
+											panic!();
+										}
+									}
+									let value = ctx.globals().get::<&str, String>("__freshfetch__");
+									match value {
+										Ok(v) => v,
+										Err(e) => {
+											errors::handle(&format!("{}{}", errors::LUA, e));
+											panic!();
+										}
+									}
 								}
-								match ctx.load(ANSI).exec() {
-									Ok(_) => (),
-									Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-								}
-								match ctx.load(&file).exec() {
-									Ok(_) => (),
-									Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-								}
-								let value = ctx.globals().get::<&str, String>("__freshfetch__");
-								match value {
-									Ok(v) => v,
-									Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!(); }
-								}
-							},
+							}
 							Err(e) => {
-								errors::handle(&format!("{}{file}{}{err}",
+								errors::handle(&format!(
+									"{}{file}{}{err}",
 									errors::io::READ.0,
 									errors::io::READ.1,
 									file = "~/.config/freshfetch/art.lua",
-									err = e));
+									err = e
+								));
 								panic!();
 							}
 						}
@@ -94,11 +110,13 @@ impl Art {
 
 			let mut w = 0usize;
 			let mut h = 0usize;
-			
+
 			for line in plaintext.split("\n").collect::<Vec<&str>>() {
 				{
 					let len = line.chars().collect::<Vec<char>>().len();
-					if len > w { w = len; }
+					if len > w {
+						w = len;
+					}
 				}
 				h += 1;
 			}

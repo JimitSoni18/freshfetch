@@ -1,28 +1,28 @@
 use crate::chrono;
-use crate::sysinfo;
 use crate::mlua;
+use crate::sysinfo;
 
-use crate::errors;
 use super::kernel;
 use super::utils;
+use crate::errors;
 
-use std::path::{ Path };
+use std::path::Path;
 
+use chrono::{DateTime, Datelike, TimeZone, Timelike, Utc};
 use mlua::prelude::*;
-use chrono::{ Utc, DateTime, Datelike, Timelike, TimeZone };
-use sysinfo::{ SystemExt };
+use sysinfo::SystemExt;
 
-use crate::{ Inject };
-use kernel::{ Kernel };
-use utils::{ get_system };
+use crate::Inject;
+use kernel::Kernel;
+use utils::get_system;
 
-pub(crate) struct Uptime ( pub DateTime<Utc> );
+pub(crate) struct Uptime(pub DateTime<Utc>);
 
 impl Uptime {
 	pub fn new(k: &Kernel) -> Self {
 		let uptime_seconds;
 		match k.name.as_str() {
-			"Linux"|"Windows"|"MINIX" => {
+			"Linux" | "Windows" | "MINIX" => {
 				// Since `crate::sysinfo::SystemExt::get_uptime()` gets uptime
 				// from /proc/uptime, we should check that it exists and have a
 				// fallback.
@@ -30,7 +30,7 @@ impl Uptime {
 					uptime_seconds = get_system().uptime() as i64;
 				} else {
 					// `crate::sysinfo::SystemExt::get_boot_time()` doesn't
-					// appear to rely on /proc/uptime, so we should be able to 
+					// appear to rely on /proc/uptime, so we should be able to
 					// use it here.
 					let boot_time = get_system().boot_time() as i64;
 					let now_time = Utc::now().timestamp();
@@ -39,7 +39,9 @@ impl Uptime {
 			}
 			// Unknown OSes should have already exit(1)'d by now, this is just
 			// to satisfy the compiler.
-			_ => { uptime_seconds = 0; }
+			_ => {
+				uptime_seconds = 0;
+			}
 		}
 		Uptime(Utc.timestamp(uptime_seconds, 0))
 	}

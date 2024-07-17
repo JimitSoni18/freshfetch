@@ -1,5 +1,5 @@
-use crate::term_size;
 use crate::mlua;
+use crate::term_size;
 
 use crate::errors;
 
@@ -29,19 +29,18 @@ impl Inject for Terminal {
 			Ok(t) => {
 				match t.set("width", self.width) {
 					Ok(_) => (),
-					Err(e) => errors::handle(&format!("{}{err}", errors::LUA, err =e)),
+					Err(e) => errors::handle(&format!("{}{err}", errors::LUA, err = e)),
 				}
 				match t.set("height", self.height) {
 					Ok(_) => (),
-					Err(e) => errors::handle(&format!("{}{err}", errors::LUA, err =e)),
+					Err(e) => errors::handle(&format!("{}{err}", errors::LUA, err = e)),
 				}
 				match globals.set("terminal", t) {
 					Ok(_) => (),
-					Err(e) => errors::handle(&format!("{}{err}", errors::LUA, err =e)),
+					Err(e) => errors::handle(&format!("{}{err}", errors::LUA, err = e)),
 				}
 			}
-			Err(e) => errors::handle(&format!("{}{err}", errors::LUA, err =e)),
+			Err(e) => errors::handle(&format!("{}{err}", errors::LUA, err = e)),
 		}
 	}
 }
-

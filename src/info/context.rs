@@ -4,10 +4,10 @@ use crate::errors;
 
 use mlua::prelude::*;
 
-use crate::{ Inject };
+use crate::Inject;
 
-use std::fs::{ read_to_string };
-use std::env::{ var };
+use std::env::var;
+use std::fs::read_to_string;
 
 #[derive(Clone, Debug)]
 pub(crate) struct Context {
@@ -25,9 +25,9 @@ impl Context {
 			host: match read_to_string("/etc/hostname") {
 				Ok(v) => v,
 				Err(_) => return None,
-			}
+			},
 		})
-	} 
+	}
 }
 
 impl Inject for Context {
@@ -37,18 +37,30 @@ impl Inject for Context {
 			Ok(t) => {
 				match t.set("user", self.user.as_str()) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!() }
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!()
+					}
 				}
 				match t.set("host", self.host.as_str()) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!() }
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!()
+					}
 				}
 				match globals.set("context", t) {
 					Ok(_) => (),
-					Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!() }
+					Err(e) => {
+						errors::handle(&format!("{}{}", errors::LUA, e));
+						panic!()
+					}
 				}
 			}
-			Err(e) => { errors::handle(&format!("{}{}", errors::LUA, e)); panic!() }
+			Err(e) => {
+				errors::handle(&format!("{}{}", errors::LUA, e));
+				panic!()
+			}
 		}
 	}
 }
